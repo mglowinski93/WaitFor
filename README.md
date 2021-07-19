@@ -1,4 +1,4 @@
-# What is this script?
+### What is this script?
 Script that waits for a ready TCP / UDP connection, can be used to synchronize services like docker containers.
 
 ### Usage
