@@ -1,6 +1,6 @@
 #!/usr/bin/env sh
 
-TIMEOUT=15
+TIMEOUT=60
 INTERVAL=1
 QUIET=0
 
