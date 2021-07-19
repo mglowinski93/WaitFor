@@ -19,8 +19,8 @@ There is also possibility to start a program once check is successfull:
 ./wait-for 127.0.0.1:3306 --timeout=60 --interval==5 -- echo "Database ready"
 ```
 
-### Arguments
-Script needs `host url` and `host port` for proper working.
+### Parameters
+Script needs `host url` and `host port` for proper execution.
 Any others are optional.
 
 Default value for timeout is 60 sec.
