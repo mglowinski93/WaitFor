@@ -1,0 +1,100 @@
+#!/usr/bin/env sh
+
+TIMEOUT=15
+INTERVAL=1
+QUIET=0
+
+echoerr() {
+    if [ "$QUIET" -ne 1 ]; then printf "%s\n" "$*" 1>&2; fi
+}
+
+# Help function
+usage() {
+    exitcode="$1"
+    cat << USAGE >&2
+Usage:
+  $cmdname host:port [-t timeout] [-- command args]
+  -q | --quiet                        Do not output any status messages
+  -t TIMEOUT | --timeout=timeout      Timeout in seconds, zero for no timeout
+  -i INTERVAL | --interval=interval   Time in seconds between retries
+  -- COMMAND ARGS                     Execute command with args after the check finished successfully
+USAGE
+    exit "$exitcode"
+}
+
+wait_for() {
+    local start_time=$( date '+%s' )
+
+    while [ $(( $(date +%s) - $TIMEOUT )) -lt $start_time ] ||  [ $TIMEOUT -eq 0 ]; do
+        nc -z "$HOST" "$PORT" > /dev/null 2>&1
+
+        result=$?
+        if [ $result -eq 0 ] ; then
+            if [ $# -gt 0 ] ; then
+                exec "$@"
+            fi
+            echoerr "$HOST":"$PORT" is available
+            exit 0 # Exit on success
+        fi
+        # Actions to do after failing to establish connection
+        echoerr "$HOST":"$PORT" is not available
+        sleep $INTERVAL
+    done
+
+    echoerr "Operation timeout"
+    exit 1 # Exit on timeout
+}
+
+# Parse arguments
+while [ $# -gt 0 ]; do
+    key=$1
+    case "$key" in
+        *:* ) # parsing host and port
+            HOST=$(printf "%s\n" "$1"| cut -d : -f 1)
+            PORT=$(printf "%s\n" "$1"| cut -d : -f 2)
+            shift 1
+            ;;
+        -q | --quiet)
+            QUIET=1
+            shift 1
+            ;;
+        -t)
+            TIMEOUT="$2"
+            if [ "$TIMEOUT" = "" ]; then echoerr "No value parsed for timeout";break; fi
+            shift 2
+            ;;
+        --timeout=*)
+            TIMEOUT="${1#*=}"
+            shift 1
+            ;;
+        -i)
+            INTERVAL="$2"
+            if [ "$INTERVAL" = "" ]; then echoerr "No value parsed for interval";break; fi
+            shift 2
+            ;;
+        --interval=*)
+            INTERVAL="${1#*=}"
+            shift 1
+            ;;
+        --) # command executed after successful check
+            shift
+            break
+            ;;
+        -h|--help)
+            usage 0
+            ;;
+        *) # Any other parameter
+            echoerr "Unknown argument: $1"
+            usage 1
+            ;;
+    esac
+done
+
+# Exit script if no host or no port parsed.
+# This is outside while loop to make it obligatory parameter.
+if [ "$HOST" = "" -o "$PORT" = "" ]; then
+    echoerr "Error: Host and port have to be provided."
+    usage 2
+fi
+
+wait_for "$@"
