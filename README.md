@@ -9,6 +9,10 @@ Default value for timeout is 60 sec.
 
 Default value for interval is 1 sec.
 
+#### Requirements
+This script requires `nc` command.
+In case `nc` command is not available, `netcat` linux package needs to be installed.
+
 #### Installation
 1. Download `wait-for` script
 1. Execute it by calling `./wait-for` with expected parameters
